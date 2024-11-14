@@ -19,11 +19,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Book {
-
     @Id
     @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID",
-            strategy = "org.hibernate.id.UUIDGenerator")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column
     private UUID id;
 
@@ -39,3 +37,4 @@ public class Book {
     @OneToMany(mappedBy = "book")
     private List<Conference> conferences = new ArrayList<>();
 }
+
