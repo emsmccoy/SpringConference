@@ -1,74 +1,87 @@
-/*
-
 package io.bcn.springConference.view;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Route;
+import io.bcn.springConference.model.Book;
+import io.bcn.springConference.model.Conference;
+import io.bcn.springConference.model.Speaker;
+import io.bcn.springConference.repository.BookRepository;
+import io.bcn.springConference.repository.ConferenceRepository;
+import io.bcn.springConference.repository.SpeakerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
-
-@Route("/conference")
+@Route(value = "conferences", layout = MainLayout.class)
 public class ConferenceView extends VerticalLayout {
 
+    private final ConferenceRepository conferenceRepository;
+    private final BookRepository bookRepository;
+    private final SpeakerRepository speakerRepository;
 
+    private Grid<Conference> grid = new Grid<>(Conference.class);
+    private Binder<Conference> binder = new Binder<>(Conference.class);
 
-    private final TextField name = new TextField("Name");
-    private final TextField email = new TextField("Email");
-    private final TextField phoneNumber = new TextField("Phone Number");
-    private final Button save = new Button("Save");
-    private final Button delete = new Button("Delete");
+    private ComboBox<Book> bookComboBox;
+    private ComboBox<Speaker> speakerComboBox;
+    private DatePicker datePicker;
+    private Button saveButton;
 
+    @Autowired
+    public ConferenceView(ConferenceRepository conferenceRepository, BookRepository bookRepository, SpeakerRepository speakerRepository) {
+        this.conferenceRepository = conferenceRepository;
+        this.bookRepository = bookRepository;
+        this.speakerRepository = speakerRepository;
 
-
-
-    // Method to create the main layout
-    private Component createMainLayout() {
-        // Create the 3-column layout
-        HorizontalLayout mainLayout = new HorizontalLayout();
-        mainLayout.setSizeFull();
-        mainLayout.setPadding(false);
-        mainLayout.setSpacing(false);
-
-        // Left column (empty for spacing)
-        VerticalLayout leftColumn = new VerticalLayout();
-        leftColumn.setWidth("20%");
-
-        // Center column (contains all the components)
-        VerticalLayout centerColumn = new VerticalLayout();
-        centerColumn.setWidth("60%");
-        centerColumn.setAlignItems(Alignment.CENTER);
-
-        // Right column (empty for spacing)
-        VerticalLayout rightColumn = new VerticalLayout();
-        rightColumn.setWidth("20%");
-
-        // Create a form layout
-        HorizontalLayout formLayout = new HorizontalLayout(name, email, phoneNumber);
-        formLayout.setWidth("100%");
-        formLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        // Create a button layout
-        HorizontalLayout buttonLayout = new HorizontalLayout(save, delete);
-        buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        // Add components to the center column
-        centerColumn.add(
-                new H2("Customer Management"),
-                formLayout,
-                buttonLayout
-        );
-
-        // Add all columns to the main layout
-        mainLayout.add(leftColumn, centerColumn, rightColumn);
-
-        return mainLayout;
+        setupForm();
+        setupGrid();
+        add(grid, bookComboBox, speakerComboBox, datePicker, saveButton);
+        updateGrid();
     }
 
+    private void setupForm() {
+        bookComboBox = new ComboBox<>("Select Book");
+        bookComboBox.setItems(bookRepository.findAll());
+        bookComboBox.setItemLabelGenerator(Book::getTitle);
+
+        speakerComboBox = new ComboBox<>("Select Speaker");
+        speakerComboBox.setItems(speakerRepository.findAll());
+        speakerComboBox.setItemLabelGenerator(Speaker::getName);
+
+        datePicker = new DatePicker("Date");
+
+        saveButton = new Button("Save", e -> saveConference());
+
+        binder.bind(bookComboBox, Conference::getBook, Conference::setBook);
+        binder.bind(speakerComboBox, Conference::getSpeaker, Conference::setSpeaker);
+        binder.bind(datePicker, Conference::getDate, Conference::setDate);
+    }
+
+    private void setupGrid() {
+        grid.setColumns("name", "date");
+        grid.addComponentColumn(conference -> {
+            Speaker speaker = conference.getSpeaker();
+            Avatar avatar = new Avatar(speaker.getName());
+            avatar.setWidth("50px");
+            avatar.setHeight("50px");
+            return avatar;
+        }).setHeader("Speaker Avatar");
+    }
+
+    private void saveConference() {
+        Conference conference = new Conference();
+        binder.writeBeanIfValid(conference);
+        conferenceRepository.save(conference);
+        updateGrid();
+        binder.readBean(null);
+    }
+
+    private void updateGrid() {
+        grid.setItems(conferenceRepository.findAll());
+    }
 }
-*/
+
